@@ -38,10 +38,11 @@ export async function POST(req: NextRequest) {
   const url = new URL("/admin", req.url);
   url.hash = "ia";
   if (error) {
-    url.searchParams.set(
-      "error",
-      `No se pudo subir el archivo. ${error.message}`
-    );
+    const message =
+      error.message.includes("Bucket")
+        ? "No se encontró el bucket 'brand-knowledge'. Crealo en Supabase Storage."
+        : `No se pudo subir el archivo. ${error.message}`;
+    url.searchParams.set("error", message);
   } else {
     url.searchParams.set("notice", "Archivo subido correctamente.");
   }

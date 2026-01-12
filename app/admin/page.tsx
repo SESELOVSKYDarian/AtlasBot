@@ -62,6 +62,7 @@ export default async function AdminHome({
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
       process.env.SUPABASE_SERVICE_ROLE_KEY
   );
+  const aiReady = Boolean(process.env.OPENAI_API_KEY);
 
   let rules: any[] = [];
   let blocks: Block[] = [];
@@ -309,13 +310,15 @@ export default async function AdminHome({
             </select>
             <input
               name="start_time"
+              type="time"
+              step={60}
               className="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-zinc-100"
-              placeholder="09:00"
             />
             <input
               name="end_time"
+              type="time"
+              step={60}
               className="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-zinc-100"
-              placeholder="13:00"
             />
             <button className="rounded-xl bg-white text-black py-2 font-medium">
               Guardar
@@ -366,13 +369,13 @@ export default async function AdminHome({
           >
             <input
               name="start_at"
+              type="date"
               className="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-zinc-100"
-              placeholder="2026-02-10T00:00:00Z"
             />
             <input
               name="end_at"
+              type="date"
               className="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-zinc-100"
-              placeholder="2026-02-20T00:00:00Z"
             />
             <input
               name="reason"
@@ -451,6 +454,7 @@ export default async function AdminHome({
               <input
                 type="file"
                 name="file"
+                accept=".pdf,.txt,.doc,.docx"
                 className="flex-1 rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
               />
               <button className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
@@ -463,7 +467,7 @@ export default async function AdminHome({
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
-            <AssistantPanel />
+            <AssistantPanel ready={aiReady} />
           </div>
         </div>
       </section>

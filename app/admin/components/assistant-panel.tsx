@@ -7,7 +7,7 @@ type ChatMessage = {
   content: string;
 };
 
-export default function AssistantPanel() {
+export default function AssistantPanel({ ready }: { ready: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -18,7 +18,10 @@ export default function AssistantPanel() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const canSend = useMemo(() => input.trim().length > 0 && !loading, [input, loading]);
+  const canSend = useMemo(
+    () => input.trim().length > 0 && !loading && ready,
+    [input, loading, ready]
+  );
 
   async function sendMessage() {
     if (!canSend) return;
@@ -37,11 +40,13 @@ export default function AssistantPanel() {
     });
 
     if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
+            data?.error ??
             "No pude conectar con la IA. Revisá la API key y volvé a intentar.",
         },
       ]);
@@ -67,6 +72,11 @@ export default function AssistantPanel() {
           Este panel simula el comportamiento del chatbot para validar
           respuestas.
         </p>
+        {!ready ? (
+          <p className="mt-2 text-xs text-amber-400">
+            Falta OPENAI_API_KEY en el entorno. El asistente está desactivado.
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/60 p-3 text-xs text-zinc-200">

@@ -16,16 +16,27 @@ export async function POST(req: NextRequest) {
   }
 
   const form = await req.formData();
-  const start_at = String(form.get("start_at") || "");
-  const end_at = String(form.get("end_at") || "");
+  const start_at_raw = String(form.get("start_at") || "");
+  const end_at_raw = String(form.get("end_at") || "");
   const reason = String(form.get("reason") || "");
 
-  if (!start_at || !end_at) {
+  if (!start_at_raw || !end_at_raw) {
     const url = new URL("/admin", req.url);
     url.hash = "bloqueos";
     url.searchParams.set("error", "Completa fechas de inicio y fin.");
     return NextResponse.redirect(url);
   }
+
+  const toTimestamp = (value: string, isEnd: boolean) => {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return isEnd ? `${trimmed}T23:59:59Z` : `${trimmed}T00:00:00Z`;
+    }
+    return trimmed;
+  };
+
+  const start_at = toTimestamp(start_at_raw, false);
+  const end_at = toTimestamp(end_at_raw, true);
 
   const sb = supabaseServer();
   const { data: trainer } = await sb
