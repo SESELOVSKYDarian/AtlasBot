@@ -17,9 +17,9 @@ export default function AdminLayout({
           </div>
           <nav className="flex gap-2 text-sm">
             <NavLink href="/admin">Inicio</NavLink>
-            <NavLink href="/admin/horarios">Horarios</NavLink>
-            <NavLink href="/admin/bloqueos">Bloqueos</NavLink>
-            <NavLink href="/admin/turnos">Turnos</NavLink>
+            <NavLink href="/admin#horarios">Horarios</NavLink>
+            <NavLink href="/admin#bloqueos">Bloqueos</NavLink>
+            <NavLink href="/admin#turnos">Turnos</NavLink>
           </nav>
         </div>
       </header>
