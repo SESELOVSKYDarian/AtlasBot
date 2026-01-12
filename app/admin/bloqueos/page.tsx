@@ -6,7 +6,27 @@ export default async function BloqueosPage() {
     .from("trainers")
     .select("*")
     .limit(1)
-    .single();
+    .maybeSingle();
+
+  if (!trainer) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Bloqueos / Vacaciones</h1>
+          <p className="text-sm text-zinc-500">
+            Todo lo que cargues acá se considera “no disponible” para turnos.
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-white shadow p-5">
+          <p className="text-sm text-zinc-600">
+            No hay entrenador configurado todavía. Creá un registro en la tabla
+            “trainers” para habilitar la carga de bloqueos.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const { data: blocks } = await sb
     .from("blocks")

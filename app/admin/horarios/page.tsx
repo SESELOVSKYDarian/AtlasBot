@@ -17,7 +17,28 @@ export default async function HorariosPage() {
     .from("trainers")
     .select("*")
     .limit(1)
-    .single();
+    .maybeSingle();
+
+  if (!trainer) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Horarios</h1>
+          <p className="text-sm text-zinc-500">
+            Define rangos por día (ej: Lun 09-13 y 16-20)
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-white shadow p-5">
+          <p className="text-sm text-zinc-600">
+            No hay entrenador configurado todavía. Creá un registro en la tabla
+            “trainers” para habilitar la carga de horarios.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const trainerId = trainer.id;
 
   const { data: rules } = await sb

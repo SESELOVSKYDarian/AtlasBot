@@ -6,7 +6,27 @@ export default async function TurnosPage() {
     .from("trainers")
     .select("*")
     .limit(1)
-    .single();
+    .maybeSingle();
+
+  if (!trainer) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Turnos</h1>
+          <p className="text-sm text-zinc-500">
+            Lista de reservas registradas
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-white shadow p-5">
+          <p className="text-sm text-zinc-600">
+            No hay entrenador configurado todavía. Creá un registro en la tabla
+            “trainers” para empezar a registrar turnos.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const { data: appts } = await sb
     .from("appointments")
