@@ -2,14 +2,56 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    const url = new URL("/admin", req.url);
+    url.hash = "bloqueos";
+    url.searchParams.set(
+      "error",
+      "Faltan variables de entorno de Supabase para guardar bloqueos."
+    );
+    return NextResponse.redirect(url);
+  }
+
   const form = await req.formData();
   const start_at = String(form.get("start_at") || "");
   const end_at = String(form.get("end_at") || "");
   const reason = String(form.get("reason") || "");
 
-  const sb = supabaseServer();
-  const { data: trainer } = await sb.from("trainers").select("*").limit(1).single();
+  if (!start_at || !end_at) {
+    const url = new URL("/admin", req.url);
+    url.hash = "bloqueos";
+    url.searchParams.set("error", "Completa fechas de inicio y fin.");
+    return NextResponse.redirect(url);
+  }
 
-  await sb.from("blocks").insert({ trainer_id: trainer.id, start_at, end_at, reason });
-  return NextResponse.redirect(new URL("/admin/bloqueos", req.url));
+  const sb = supabaseServer();
+  const { data: trainer } = await sb
+    .from("trainers")
+    .select("*")
+    .limit(1)
+    .maybeSingle();
+
+  if (!trainer) {
+    const url = new URL("/admin", req.url);
+    url.hash = "bloqueos";
+    url.searchParams.set(
+      "error",
+      "No hay entrenador configurado para guardar bloqueos."
+    );
+    return NextResponse.redirect(url);
+  }
+
+  const { error } = await sb
+    .from("blocks")
+    .insert({ trainer_id: trainer.id, start_at, end_at, reason });
+
+  const url = new URL("/admin", req.url);
+  url.hash = "bloqueos";
+  if (error) {
+    url.searchParams.set("error", "No se pudo guardar el bloqueo.");
+  }
+  return NextResponse.redirect(url);
 }

@@ -6,12 +6,12 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <header className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/80 backdrop-blur">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
           <div>
             <div className="font-semibold">Atlas • Dashboard</div>
-            <div className="text-xs text-zinc-500">
+            <div className="text-xs text-zinc-400">
               Horarios • Bloqueos • Turnos
             </div>
           </div>
@@ -39,7 +39,7 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="rounded-xl px-3 py-1.5 hover:bg-zinc-100 text-zinc-700"
+      className="rounded-xl px-3 py-1.5 text-zinc-200 hover:bg-white/10"
     >
       {children}
     </Link>
