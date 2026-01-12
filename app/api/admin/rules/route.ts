@@ -54,7 +54,12 @@ export async function POST(req: NextRequest) {
   const url = new URL("/admin", req.url);
   url.hash = "horarios";
   if (error) {
-    url.searchParams.set("error", "No se pudo guardar el horario.");
+    url.searchParams.set(
+      "error",
+      `No se pudo guardar el horario. ${error.message}`
+    );
+  } else {
+    url.searchParams.set("notice", "Horario guardado correctamente.");
   }
   return NextResponse.redirect(url);
 }

@@ -7,36 +7,43 @@ export async function POST(req: NextRequest) {
     !process.env.SUPABASE_SERVICE_ROLE_KEY
   ) {
     const url = new URL("/admin", req.url);
-    url.hash = "horarios";
+    url.hash = "ia";
     url.searchParams.set(
       "error",
-      "Faltan variables de entorno de Supabase para eliminar horarios."
+      "Faltan variables de entorno de Supabase para subir archivos."
     );
     return NextResponse.redirect(url);
   }
 
   const form = await req.formData();
-  const id = String(form.get("id") || "");
+  const file = form.get("file");
 
-  if (!id) {
+  if (!file || !(file instanceof File)) {
     const url = new URL("/admin", req.url);
-    url.hash = "horarios";
-    url.searchParams.set("error", "No se encontró el horario a eliminar.");
+    url.hash = "ia";
+    url.searchParams.set("error", "Seleccioná un archivo válido.");
     return NextResponse.redirect(url);
   }
 
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileName = `${Date.now()}-${file.name}`;
   const sb = supabaseServer();
-  const { error } = await sb.from("availability_rules").delete().eq("id", id);
+  const { error } = await sb.storage
+    .from("brand-knowledge")
+    .upload(fileName, buffer, {
+      contentType: file.type || "application/octet-stream",
+      upsert: true,
+    });
 
   const url = new URL("/admin", req.url);
-  url.hash = "horarios";
+  url.hash = "ia";
   if (error) {
     url.searchParams.set(
       "error",
-      `No se pudo eliminar el horario. ${error.message}`
+      `No se pudo subir el archivo. ${error.message}`
     );
   } else {
-    url.searchParams.set("notice", "Horario eliminado.");
+    url.searchParams.set("notice", "Archivo subido correctamente.");
   }
   return NextResponse.redirect(url);
 }

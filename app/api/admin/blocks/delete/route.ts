@@ -31,7 +31,12 @@ export async function POST(req: NextRequest) {
   const url = new URL("/admin", req.url);
   url.hash = "bloqueos";
   if (error) {
-    url.searchParams.set("error", "No se pudo eliminar el bloqueo.");
+    url.searchParams.set(
+      "error",
+      `No se pudo eliminar el bloqueo. ${error.message}`
+    );
+  } else {
+    url.searchParams.set("notice", "Bloqueo eliminado.");
   }
   return NextResponse.redirect(url);
 }

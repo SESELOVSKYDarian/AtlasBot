@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase";
+import AssistantPanel from "./components/assistant-panel";
 
 const dayNames = [
   "",
@@ -50,7 +51,7 @@ function buildMonthGrid(year: number, monthIndex: number) {
 export default async function AdminHome({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 }) {
   const resolvedSearchParams = searchParams
     ? await searchParams
@@ -77,17 +78,17 @@ export default async function AdminHome({
     if (!trainer) {
       return (
         <div className="space-y-6">
-          <div className="rounded-3xl bg-white shadow p-6">
+          <div className="rounded-3xl bg-zinc-900/80 shadow p-6 ring-1 ring-white/10">
             <h1 className="text-2xl font-semibold">Panel de administración</h1>
-            <p className="text-sm text-zinc-500 mt-2">
+            <p className="text-sm text-zinc-300 mt-2">
               Todavía no hay un entrenador configurado. Creá un registro en la
               tabla “trainers” para habilitar el panel completo.
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white shadow p-6">
+          <div className="rounded-3xl bg-zinc-900/80 shadow p-6 ring-1 ring-white/10">
             <h2 className="font-semibold">Checklist antes de WhatsApp</h2>
-            <ul className="mt-3 text-sm text-zinc-600 list-disc pl-5 space-y-1">
+            <ul className="mt-3 text-sm text-zinc-300 list-disc pl-5 space-y-1">
               <li>Cargar horarios (ej: Lun–Vie 09-13 y 16-20)</li>
               <li>Cargar bloqueos/vacaciones</li>
               <li>Verificar que la tabla “trainers” tenga 1 fila</li>
@@ -150,6 +151,11 @@ export default async function AdminHome({
       {resolvedSearchParams?.error ? (
         <div className="rounded-3xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
           {resolvedSearchParams.error}
+        </div>
+      ) : null}
+      {resolvedSearchParams?.notice ? (
+        <div className="rounded-3xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+          {resolvedSearchParams.notice}
         </div>
       ) : null}
       {!supabaseReady ? (
@@ -413,6 +419,54 @@ export default async function AdminHome({
           </div>
         </section>
       </div>
+
+      <section className="rounded-3xl bg-zinc-900/80 shadow p-6 ring-1 ring-white/10" id="ia">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">IA y Conocimiento</h2>
+            <p className="text-sm text-zinc-300">
+              Conectá el asistente al chatbot y cargá documentos de la marca.
+            </p>
+          </div>
+          <div className="text-xs text-zinc-500">
+            Usa OPENAI_API_KEY y NEXT_PUBLIC_GOOGLE_CALENDAR_EMBED_URL.
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
+          <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+            <h3 className="text-sm font-semibold text-zinc-200">
+              Subir archivos de conocimiento
+            </h3>
+            <p className="mt-1 text-xs text-zinc-400">
+              Subí PDFs, docs o textos. Se guardan en Supabase Storage para que
+              el chatbot los use luego.
+            </p>
+            <form
+              className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center"
+              action="/api/admin/knowledge"
+              method="post"
+              encType="multipart/form-data"
+            >
+              <input
+                type="file"
+                name="file"
+                className="flex-1 rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+              />
+              <button className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black">
+                Subir archivo
+              </button>
+            </form>
+            <p className="mt-2 text-xs text-zinc-500">
+              Bucket requerido: <span className="text-zinc-300">brand-knowledge</span>.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+            <AssistantPanel />
+          </div>
+        </div>
+      </section>
 
       <section className="rounded-3xl bg-zinc-900/80 shadow p-6 ring-1 ring-white/10">
         <div>

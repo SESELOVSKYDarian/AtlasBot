@@ -20,6 +20,7 @@ export default function AdminLayout({
             <NavLink href="/admin#horarios">Horarios</NavLink>
             <NavLink href="/admin#bloqueos">Bloqueos</NavLink>
             <NavLink href="/admin#turnos">Turnos</NavLink>
+            <NavLink href="/admin#ia">IA</NavLink>
           </nav>
         </div>
       </header>

@@ -51,7 +51,12 @@ export async function POST(req: NextRequest) {
   const url = new URL("/admin", req.url);
   url.hash = "bloqueos";
   if (error) {
-    url.searchParams.set("error", "No se pudo guardar el bloqueo.");
+    url.searchParams.set(
+      "error",
+      `No se pudo guardar el bloqueo. ${error.message}`
+    );
+  } else {
+    url.searchParams.set("notice", "Bloqueo guardado correctamente.");
   }
   return NextResponse.redirect(url);
 }
