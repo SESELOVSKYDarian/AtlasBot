@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>VaseLabs Performance Analytics</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#16599c",
+                        "brand-violet": "#8b5cf6",
+                        "brand-turquoise": "#06b6d4",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                        "surface-dark": "#1a242e",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .chart-gradient-blue {
+            background: linear-gradient(180deg, rgba(22, 89, 156, 0.2) 0%, rgba(22, 89, 156, 0) 100%);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display transition-colors duration-300">
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside
+            class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark flex flex-col fixed h-full z-20">
+            <div class="p-6">
+                <div class="flex items-center gap-3 text-primary">
+                    <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined">rocket_launch</span>
+                    </div>
+                    <h2 class="text-xl font-bold tracking-tight">VaseLabs</h2>
+                </div>
+            </div>
+            <nav class="flex-1 px-4 space-y-2 mt-4">
+                <div class="text-[10px] uppercase tracking-widest text-slate-400 font-bold px-4 mb-2">Main Menu</div>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark transition-all group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+                    <span class="text-sm font-semibold">Overview</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span class="text-sm font-semibold">Analytics</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark transition-all group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">forum</span>
+                    <span class="text-sm font-semibold">Conversations</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark transition-all group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">psychology</span>
+                    <span class="text-sm font-semibold">AI Training</span>
+                </a>
+                <div class="pt-8 text-[10px] uppercase tracking-widest text-slate-400 font-bold px-4 mb-2">Workspace
+                </div>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark transition-all group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">group</span>
+                    <span class="text-sm font-semibold">Team Members</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-dark transition-all group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">settings</span>
+                    <span class="text-sm font-semibold">Settings</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-surface-dark">
+                    <div class="size-10 rounded-full bg-cover bg-center" data-alt="User profile avatar"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBYa8UNMjrYCe2JqlrGaKUsESTgo_OF1hARmgiDrA5fg_c63MKH2M6S6Yvw6REWiyevJlf4DmOp1t-YoaC46IWuExH168h3d5yAmSs8CoMxtdpbTEOg3v7Q_ZVmu64NFqc8zM56p0Shyry9VV3LGPPZTO10WhYaakZjdPxqvKqqZVNFo2jTzh1LcaBQGoJjaKAi-3M0bg4-kuE69fed5FnCmQfRApvrG_yLbRZQ_7pKjH1a_yhbQVsNhdPGzTKsA7fpkerF4E2kYGaz')">
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-xs font-bold truncate">Alex Rivera</p>
+                        <p class="text-[10px] text-slate-400 truncate">Pro Plan Admin</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- Main Content Area -->
+        <main class="flex-1 ml-64 min-h-screen">
+            <!-- Header / Top Bar -->
+            <header
+                class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-10 px-8 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-lg font-bold">Performance Analytics</h1>
+                    <span
+                        class="px-2 py-0.5 rounded text-[10px] bg-green-500/10 text-green-500 font-bold uppercase tracking-wider">Live</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div
+                        class="flex items-center gap-2 bg-slate-100 dark:bg-surface-dark px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <span class="material-symbols-outlined text-sm">calendar_today</span>
+                        <span class="text-xs font-semibold">Oct 12 - Oct 19, 2023</span>
+                    </div>
+                    <button
+                        class="size-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-surface-dark hover:bg-primary/10 hover:text-primary transition-all">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <button
+                        class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-sm">download</span>
+                        Export
+                    </button>
+                </div>
+            </header>
+            <div class="p-8 max-w-[1200px] mx-auto space-y-8">
+                <!-- KPI Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Card 1 -->
+                    <div
+                        class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-1 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="p-2 rounded-lg bg-primary/10 text-primary">
+                                <span class="material-symbols-outlined">chat</span>
+                            </span>
+                            <span
+                                class="text-xs font-bold text-green-500 flex items-center bg-green-500/10 px-2 py-0.5 rounded-full">
+                                <span class="material-symbols-outlined text-xs">trending_up</span> 12%
+                            </span>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Conversations</p>
+                        <h3 class="text-3xl font-extrabold tracking-tight">24,812</h3>
+                    </div>
+                    <!-- Card 2 -->
+                    <div
+                        class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-1 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="p-2 rounded-lg bg-brand-turquoise/10 text-brand-turquoise">
+                                <span class="material-symbols-outlined">person_add</span>
+                            </span>
+                            <span
+                                class="text-xs font-bold text-green-500 flex items-center bg-green-500/10 px-2 py-0.5 rounded-full">
+                                <span class="material-symbols-outlined text-xs">trending_up</span> 8.4%
+                            </span>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Leads Generated</p>
+                        <h3 class="text-3xl font-extrabold tracking-tight">1,240</h3>
+                    </div>
+                    <!-- Card 3 -->
+                    <div
+                        class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-1 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="p-2 rounded-lg bg-brand-violet/10 text-brand-violet">
+                                <span class="material-symbols-outlined">timer</span>
+                            </span>
+                            <span
+                                class="text-xs font-bold text-red-500 flex items-center bg-red-500/10 px-2 py-0.5 rounded-full">
+                                <span class="material-symbols-outlined text-xs">trending_down</span> 5.2%
+                            </span>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Avg. Response Time</p>
+                        <h3 class="text-3xl font-extrabold tracking-tight">42<span
+                                class="text-base font-normal ml-1">sec</span></h3>
+                    </div>
+                    <!-- Card 4 -->
+                    <div
+                        class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-1 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="p-2 rounded-lg bg-orange-500/10 text-orange-500">
+                                <span class="material-symbols-outlined">bolt</span>
+                            </span>
+                            <span
+                                class="text-xs font-bold text-green-500 flex items-center bg-green-500/10 px-2 py-0.5 rounded-full">
+                                <span class="material-symbols-outlined text-xs">trending_up</span> 4.1%
+                            </span>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Automation Rate</p>
+                        <h3 class="text-3xl font-extrabold tracking-tight">92.4%</h3>
+                    </div>
+                </div>
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Line Chart Area -->
+                    <div
+                        class="lg:col-span-2 bg-white dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h4 class="font-bold text-lg">Conversation Volume</h4>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Activity trends for the past 7
+                                    days</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button
+                                    class="px-3 py-1 rounded bg-slate-100 dark:bg-slate-700 text-xs font-bold">Daily</button>
+                                <button class="px-3 py-1 rounded text-xs font-bold text-slate-400">Weekly</button>
+                            </div>
+                        </div>
+                        <!-- Faux Line Chart Visualization -->
+                        <div class="relative h-64 w-full flex items-end gap-1">
+                            <!-- Chart Background Lines -->
+                            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
+                                <div class="border-t border-slate-500 w-full"></div>
+                                <div class="border-t border-slate-500 w-full"></div>
+                                <div class="border-t border-slate-500 w-full"></div>
+                                <div class="border-t border-slate-500 w-full"></div>
+                            </div>
+                            <!-- Area visualization with SVG -->
+                            <svg class="absolute inset-0 h-full w-full" preserveaspectratio="none"
+                                viewbox="0 0 100 100">
+                                <defs>
+                                    <lineargradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#16599c" stop-opacity="0.3"></stop>
+                                        <stop offset="100%" stop-color="#16599c" stop-opacity="0"></stop>
+                                    </lineargradient>
+                                </defs>
+                                <path d="M0,80 Q10,75 20,40 T40,50 T60,20 T80,35 T100,10 L100,100 L0,100 Z"
+                                    fill="url(#chartFill)"></path>
+                                <path d="M0,80 Q10,75 20,40 T40,50 T60,20 T80,35 T100,10" fill="transparent"
+                                    stroke="#16599c" stroke-width="2"></path>
+                                <!-- Highlight points -->
+                                <circle cx="20" cy="40" fill="#16599c" r="1.5"></circle>
+                                <circle cx="40" cy="50" fill="#16599c" r="1.5"></circle>
+                                <circle cx="60" cy="20" fill="#16599c" r="1.5"></circle>
+                                <circle cx="80" cy="35" fill="#16599c" r="1.5"></circle>
+                            </svg>
+                            <div
+                                class="absolute bottom-0 left-0 w-full flex justify-between text-[10px] text-slate-400 px-2 py-1">
+                                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Doughnut Chart Area -->
+                    <div
+                        class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                        <h4 class="font-bold text-lg mb-1">Resolution Breakdown</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-8">AI vs. Human Transfers</p>
+                        <div class="flex-1 flex flex-col items-center justify-center relative">
+                            <!-- Faux Doughnut Chart -->
+                            <div
+                                class="size-48 rounded-full border-[18px] border-brand-violet relative flex items-center justify-center">
+                                <div
+                                    class="absolute inset-[-18px] rounded-full border-[18px] border-brand-turquoise border-l-transparent border-b-transparent border-r-transparent transform rotate-[-45deg]">
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <span class="text-2xl font-black">88%</span>
+                                    <span
+                                        class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Automation</span>
+                                </div>
+                            </div>
+                            <div class="mt-8 w-full space-y-3">
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="size-3 rounded-full bg-brand-turquoise"></div>
+                                        <span class="font-medium">AI Resolved</span>
+                                    </div>
+                                    <span class="font-bold">21,834</span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="size-3 rounded-full bg-brand-violet"></div>
+                                        <span class="font-medium">Human Handover</span>
+                                    </div>
+                                    <span class="font-bold">2,978</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bottom Row: Recent High-Performing Flows -->
+                <div
+                    class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                        <h4 class="font-bold text-lg">Top Automation Flows</h4>
+                        <a class="text-primary text-sm font-bold hover:underline" href="#">View All Flows</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead
+                                class="bg-slate-50 dark:bg-background-dark/50 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                <tr>
+                                    <th class="px-6 py-4">Flow Name</th>
+                                    <th class="px-6 py-4">Triggers</th>
+                                    <th class="px-6 py-4">Success Rate</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-sm">Customer Onboarding v2</span>
+                                            <span class="text-xs text-slate-400">Created 2 days ago</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-xs font-medium">New
+                                            Contact</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="flex-1 h-1.5 w-24 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                <div class="h-full bg-brand-turquoise w-[94%]"></div>
+                                            </div>
+                                            <span class="text-xs font-bold">94%</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="flex items-center gap-1.5 text-xs text-green-500 font-bold">
+                                            <span class="size-1.5 rounded-full bg-green-500"></span>
+                                            Active
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button
+                                            class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">more_vert</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-sm">Order Tracking Flow</span>
+                                            <span class="text-xs text-slate-400">Created 1 week ago</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-xs font-medium">Keyword:
+                                            'Order'</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="flex-1 h-1.5 w-24 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                <div class="h-full bg-primary w-[88%]"></div>
+                                            </div>
+                                            <span class="text-xs font-bold">88%</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="flex items-center gap-1.5 text-xs text-green-500 font-bold">
+                                            <span class="size-1.5 rounded-full bg-green-500"></span>
+                                            Active
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button
+                                            class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">more_vert</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-sm">After-Hours Support</span>
+                                            <span class="text-xs text-slate-400">Created 1 month ago</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-xs font-medium">Schedule:
+                                            Night</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="flex-1 h-1.5 w-24 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                <div class="h-full bg-brand-violet w-[76%]"></div>
+                                            </div>
+                                            <span class="text-xs font-bold">76%</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
+                                            <span class="size-1.5 rounded-full bg-slate-400"></span>
+                                            Paused
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button
+                                            class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">more_vert</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <footer
+                class="p-8 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                <p>© 2023 VaseLabs AI. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+                    <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+                    <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+                </div>
+            </footer>
+        </main>
+    </div>
+</body>
+
+</html>
