@@ -8,10 +8,30 @@ import {
     ChevronRight, Search, Filter, Phone
 } from 'lucide-react';
 
+interface Ticket {
+    id: string;
+    status: 'open' | 'closed';
+    created_at: string;
+    subject: string;
+    profiles?: {
+        business_name: string;
+        phone: string;
+    };
+}
+
+interface SupportMessage {
+    id: string;
+    ticket_id: string;
+    sender_id?: string;
+    content: string;
+    is_bot: boolean;
+    created_at: string;
+}
+
 export default function SupportChatPage() {
-    const [tickets, setTickets] = useState<any[]>([]);
-    const [activeTicket, setActiveTicket] = useState<any>(null);
-    const [messages, setMessages] = useState<any[]>([]);
+    const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
+    const [messages, setMessages] = useState<SupportMessage[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -21,10 +41,12 @@ export default function SupportChatPage() {
         fetchTickets();
         const subscription = supabase
             .channel('support_updates')
-            .on('postgres_changes', { event: '*', table: 'support_tickets' }, fetchTickets)
+            .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'support_tickets' }, () => {
+                fetchTickets();
+            })
             .subscribe();
 
-        return () => { subscription.unsubscribe(); };
+        return () => { supabase.removeChannel(subscription); };
     }, []);
 
     useEffect(() => {
@@ -32,16 +54,17 @@ export default function SupportChatPage() {
             fetchMessages(activeTicket.id);
             const msgSub = supabase
                 .channel(`chat_${activeTicket.id}`)
-                .on('postgres_changes', {
+                .on('postgres_changes' as any, {
                     event: 'INSERT',
+                    schema: 'public',
                     table: 'support_messages',
                     filter: `ticket_id=eq.${activeTicket.id}`
-                }, (payload) => {
+                }, (payload: { new: SupportMessage }) => {
                     setMessages(prev => [...prev, payload.new]);
                 })
                 .subscribe();
 
-            return () => { msgSub.unsubscribe(); };
+            return () => { supabase.removeChannel(msgSub); };
         }
     }, [activeTicket]);
 
@@ -195,10 +218,10 @@ export default function SupportChatPage() {
                                             </span>
                                         </div>
                                         <div className={`max-w-[70%] p-4 rounded-2xl text-[11px] font-bold leading-relaxed shadow-lg ${isMe
-                                                ? 'bg-secondary text-white shadow-[0_10px_30px_-10px_rgba(6,182,212,0.4)]'
-                                                : msg.is_bot
-                                                    ? 'bg-white/5 border border-white/10 text-slate-400 italic'
-                                                    : 'bg-white/10 border border-white/10 text-slate-100'
+                                            ? 'bg-secondary text-white shadow-[0_10px_30px_-10px_rgba(6,182,212,0.4)]'
+                                            : msg.is_bot
+                                                ? 'bg-white/5 border border-white/10 text-slate-400 italic'
+                                                : 'bg-white/10 border border-white/10 text-slate-100'
                                             }`}>
                                             {msg.content}
                                         </div>

@@ -11,7 +11,7 @@ export async function handleIncomingMessage(message: Message, client: Client) {
     const senderName = message.sender.pushname || 'Cliente';
 
     // 1. Handle Audio / PTT
-    if (message.type === MessageTypes.AUDIO || message.type === MessageTypes.PTT || message.mimetype?.startsWith('audio')) {
+    if (message.type === 'audio' || message.type === 'ptt' || message.mimetype?.startsWith('audio')) {
         try {
             console.log(`[Bot] Recibido audio de ${phone}. Descargando y transcribiendo...`);
             const mediaData = await client.decryptMedia(message);

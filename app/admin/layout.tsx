@@ -42,8 +42,10 @@ export default function AdminLayout({
   };
 
   const confirmSignOut = async () => {
+    console.log("SuperAdmin: Terminating session...");
     await supabase.auth.signOut();
-    router.push('/login');
+    // Force a hard reload to ensure session is cleared and redirect takes effect
+    window.location.href = '/login';
   };
 
   const isActive = (path: string) => {
@@ -58,7 +60,6 @@ export default function AdminLayout({
 
       {/* Sidebar Navigation */}
       <aside className="w-72 border-r border-white/5 bg-surface-dark/40 glass-blur flex flex-col fixed h-full z-20 hidden lg:flex">
-        {/* ... Sidebar content unchanged ... */}
         <div className="p-8">
           <div className="flex items-center gap-3 group px-2">
             <div className="size-10 relative overflow-hidden rounded-xl glass-card !p-0 flex items-center justify-center bg-white/5">
@@ -194,6 +195,8 @@ export default function AdminLayout({
         </div>
 
       </main>
+
+      {/* Render SupportWidget for everyone (including Admin/Staff) */}
       <SupportWidget />
 
       {/* LOGOUT CONFIRMATION MODAL */}

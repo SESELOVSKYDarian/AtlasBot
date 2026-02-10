@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import ModalPortal from '@/components/modal-portal';
 import SupportWidget from '@/components/SupportWidget';
 
 export default function SuperAdminLayout({
@@ -18,15 +19,25 @@ export default function SuperAdminLayout({
     children: React.ReactNode;
 }) {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
-    const handleSignOut = async () => {
-        await supabase.auth.signOut();
-        router.push('/login');
+    const handleSignOut = () => {
+        setShowLogoutConfirm(true);
     };
 
-    const isActive = (path: string) => pathname === path;
+    const confirmSignOut = async () => {
+        console.log("SuperAdmin: Terminating session...");
+        await supabase.auth.signOut();
+        // Force a hard reload to ensure session is cleared and redirect takes effect
+        window.location.href = '/login';
+    };
+
+    const isActive = (path: string) => {
+        if (path === '/super-admin') return pathname === '/super-admin';
+        return pathname.startsWith(path);
+    };
 
     const NavLink = ({ href, icon: Icon, children }: any) => (
         <Link
@@ -127,7 +138,46 @@ export default function SuperAdminLayout({
                     {children}
                 </div>
             </main>
+
+            {/* Support Widget for Master Admin */}
             <SupportWidget />
+
+            {/* LOGOUT CONFIRMATION MODAL */}
+            {showLogoutConfirm && (
+                <ModalPortal>
+                    <div className="modal-overlay">
+                        <div className="modal-content !max-w-sm">
+                            <div className="flex flex-col items-center text-center space-y-6 p-2 relative z-10">
+                                <div className="size-20 rounded-full bg-white/5 flex items-center justify-center text-slate-400 mb-2 border border-white/10 shadow-inner">
+                                    <LogOut size={32} />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-black uppercase text-white tracking-widest leading-none">¿Cerrar Sesión?</h3>
+                                    <p className="text-slate-500 text-xs font-bold leading-relaxed px-4">
+                                        Estás a punto de desconectarte del sistema de administración global.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 w-full pt-4">
+                                    <button
+                                        onClick={() => setShowLogoutConfirm(false)}
+                                        className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all cursor-pointer z-50"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={confirmSignOut}
+                                        className="w-full py-4 rounded-2xl bg-red-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 cursor-pointer z-50"
+                                    >
+                                        Salir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ModalPortal>
+            )}
         </div>
     );
 }
