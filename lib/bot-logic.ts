@@ -49,10 +49,17 @@ export async function handleIncomingMessage(message: Message, client: Client) {
 
     const state = conversation.state;
 
+    // Fetch Business Profile to determine flow
+    const { data: profile } = await supabaseAdmin.from('profiles').select('*').limit(1).single();
+    const isPedidos = profile?.business_type === 'pedidos';
+
     // 3. Global Reset Command
     if (text === 'reset' || text === 'inicio' || text === 'hola' || text === 'menu') {
         await updateState(phone, 'IDLE', {});
-        await client.sendText(phone as any, `👋 Hola ${senderName}! Soy el asistente virtual de la Coach.\n\nEscribí *turno* para reservar una cita.\nEscribí *precios* para ver valores.\nEscribí *servicios* para ver qué hacemos.`);
+        const greeting = isPedidos
+            ? `👋 Hola ${senderName}! Soy el asistente de ${profile?.business_name || 'la tienda'}.\n\nEscribí *catalogo* para ver nuestros productos.\nEscribí *pedido* para consultar por una compra.`
+            : `👋 Hola ${senderName}! Soy el asistente virtual de ${profile?.business_name || 'la Coach'}.\n\nEscribí *turno* para reservar una cita.\nEscribí *precios* para ver valores.\nEscribí *servicios* para ver qué hacemos.`;
+        await client.sendText(phone as any, greeting);
         return;
     }
 
@@ -60,47 +67,78 @@ export async function handleIncomingMessage(message: Message, client: Client) {
     try {
         const context = conversation.context as any;
 
-        // --- STATE: CHOOSING_SERVICE ---
-        if (state === 'CHOOSING_SERVICE') {
-            const selection = parseInt(text || '0');
-            if (!isNaN(selection) && context.services && context.services[selection - 1]) {
-                const selectedService = context.services[selection - 1];
-                await handleTurnoRequest(phone, client, selectedService);
+        // --- FLOW: PEDIDOS ---
+        if (isPedidos) {
+            if (text.includes('catalogo') || text.includes('productos') || text.includes('ver')) {
+                await handleCatalogRequest(phone, client, profile.id);
                 return;
-            } else if (text.includes('cancelar')) {
-                await updateState(phone, 'IDLE', {});
-                await client.sendText(phone as any, "Cancelado. ¿En qué más puedo ayudarte?");
-                return;
-            } else {
-                await client.sendText(phone as any, "Por favor elegí un número válido de la lista o escribí *cancelar*.");
-                return;
+            }
+
+            if (state === 'CHOOSING_PRODUCT') {
+                const selection = parseInt(text || '0');
+                if (!isNaN(selection) && context.products && context.products[selection - 1]) {
+                    const selectedProduct = context.products[selection - 1];
+                    await handleProductSelection(phone, client, selectedProduct);
+                    return;
+                }
+            }
+
+            if (state === 'CONFIRMING_ORDER') {
+                if (text.includes('si') || text.includes('confirmar')) {
+                    await finalizeOrder(phone, client, context.product, profile.id);
+                    return;
+                } else if (text.includes('no') || text.includes('cancelar')) {
+                    await updateState(phone, 'IDLE', {});
+                    await client.sendText(phone as any, "Entendido. ¿En qué más puedo ayudarte?");
+                    return;
+                }
             }
         }
 
-        // --- STATE: CHOOSING_OPTION (Time Slot) ---
-        if (state === 'CHOOSING_OPTION') {
-            const selection = parseInt(text || '0');
+        // --- FLOW: APPOINTMENTS (Original) ---
+        if (!isPedidos) {
+            // --- STATE: CHOOSING_SERVICE ---
+            if (state === 'CHOOSING_SERVICE') {
+                const selection = parseInt(text || '0');
+                if (!isNaN(selection) && context.services && context.services[selection - 1]) {
+                    const selectedService = context.services[selection - 1];
+                    await handleTurnoRequest(phone, client, selectedService);
+                    return;
+                } else if (text.includes('cancelar')) {
+                    await updateState(phone, 'IDLE', {});
+                    await client.sendText(phone as any, "Cancelado. ¿En qué más puedo ayudarte?");
+                    return;
+                } else {
+                    await client.sendText(phone as any, "Por favor elegí un número válido de la lista o escribí *cancelar*.");
+                    return;
+                }
+            }
 
-            if (!isNaN(selection) && context.options && context.options[selection - 1]) {
-                const selected = context.options[selection - 1];
-                const [_, dateStr, timeStr] = selected.id.split('_');
-                // context now has serviceId from previous step if applicable
-                await handleBookingConfirmation(phone, dateStr, timeStr, client, context.service);
-                return;
-            } else if (text.includes('cancelar')) {
-                await updateState(phone, 'IDLE', {});
-                await client.sendText(phone as any, "Entendido, cancelamos el proceso. ¿En qué más puedo ayudarte?");
-                return;
-            } else {
-                await client.sendText(phone as any, "Opción no válida. Por favor escribí el NÚMERO de la opción (ej: 1) o escribí *cancelar*.");
+            // --- STATE: CHOOSING_OPTION (Time Slot) ---
+            if (state === 'CHOOSING_OPTION') {
+                const selection = parseInt(text || '0');
+
+                if (!isNaN(selection) && context.options && context.options[selection - 1]) {
+                    const selected = context.options[selection - 1];
+                    const [_, dateStr, timeStr] = selected.id.split('_');
+                    // context now has serviceId from previous step if applicable
+                    await handleBookingConfirmation(phone, dateStr, timeStr, client, context.service);
+                    return;
+                } else if (text.includes('cancelar')) {
+                    await updateState(phone, 'IDLE', {});
+                    await client.sendText(phone as any, "Entendido, cancelamos el proceso. ¿En qué más puedo ayudarte?");
+                    return;
+                } else {
+                    await client.sendText(phone as any, "Opción no válida. Por favor escribí el NÚMERO de la opción (ej: 1) o escribí *cancelar*.");
+                    return;
+                }
+            }
+
+            // Logic for "Requesting Turno"
+            if (text.includes('turno') || text.includes('cita') || text.includes('reservar')) {
+                await initiateBookingFlow(phone, client);
                 return;
             }
-        }
-
-        // Logic for "Requesting Turno"
-        if (text.includes('turno') || text.includes('cita') || text.includes('reservar')) {
-            await initiateBookingFlow(phone, client);
-            return;
         }
 
         // 5. AI Fallback for everything else
@@ -138,7 +176,76 @@ export async function handleIncomingMessage(message: Message, client: Client) {
     }
 }
 
-// Helpers
+// --- New Pedidos Helpers ---
+
+async function handleCatalogRequest(phone: string, client: Client, userId: string) {
+    const { data: products } = await supabaseAdmin
+        .from('products')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('name');
+
+    if (!products || products.length === 0) {
+        await client.sendText(phone as any, "Lo siento, no tenemos productos disponibles en este momento. Volvé a consultar más tarde.");
+        return;
+    }
+
+    let msg = "🛒 *Nuestro Catálogo:*\n\n";
+    products.forEach((p, i) => {
+        msg += `${i + 1}. *${p.name}* - $${p.price}\n_${p.description || ''}_\n\n`;
+    });
+    msg += "Respondé con el NÚMERO del producto que te interesa.";
+
+    await updateState(phone, 'CHOOSING_PRODUCT', { products });
+    await client.sendText(phone as any, msg);
+}
+
+async function handleProductSelection(phone: string, client: Client, product: any) {
+    const msg = `Has elegido: *${product.name}*\nPrecio: $${product.price}\n\n¿Querés confirmar el pedido de este producto?\n\nRespondé *SI* para confirmar o *NO* para volver.`;
+    await updateState(phone, 'CONFIRMING_ORDER', { product });
+    await client.sendText(phone as any, msg);
+}
+
+async function finalizeOrder(phone: string, client: Client, product: any, userId: string) {
+    // Get Client ID
+    const { data: existingClient } = await supabaseAdmin.from('clients').select('id').eq('phone', phone).single();
+    let clientId = existingClient?.id;
+
+    // Create Order
+    const { data: order, error: orderError } = await supabaseAdmin
+        .from('orders')
+        .insert({
+            user_id: userId,
+            client_id: clientId,
+            total_amount: product.price,
+            status: 'pending',
+            payment_status: 'unpaid',
+            source: 'whatsapp',
+            notes: `Pedido vía Bot: ${product.name}`
+        })
+        .select()
+        .single();
+
+    if (orderError) {
+        console.error(orderError);
+        await client.sendText(phone as any, "❌ Hubo un error al procesar tu pedido. Por favor intentá de nuevo.");
+        return;
+    }
+
+    // Create Order Item
+    await supabaseAdmin.from('order_items').insert({
+        order_id: order.id,
+        product_id: product.id,
+        quantity: 1,
+        unit_price: product.price
+    });
+
+    await client.sendText(phone as any, `✅ *¡Pedido Realizado!*\n\nNro de Pedido: #${order.id.slice(0, 8)}\nProducto: ${product.name}\nTotal: $${product.price}\n\nNos estaremos comunicando con vos a la brevedad para coordinar el pago y envío. ¡Muchas gracias!`);
+    await updateState(phone, 'IDLE', {});
+}
+
+// Original Helpers
 
 async function updateState(phone: string, newState: string, context: any) {
     await supabaseAdmin

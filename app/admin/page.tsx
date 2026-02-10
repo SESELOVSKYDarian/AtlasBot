@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
   MessageSquare, Users, Rocket, MoreVertical,
-  Calendar, RefreshCw, Smartphone, TrendingUp, Bell
+  Calendar, RefreshCw, Smartphone, TrendingUp, Bell,
+  ShoppingBag, Package, DollarSign, Clock as ClockIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -13,6 +14,7 @@ export default function AdminDashboard() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [status, setStatus] = useState<'connected' | 'disconnected' | 'pairing'>('disconnected');
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
 
   // Dashboard Metrics State
   const [metrics, setMetrics] = useState({
@@ -21,13 +23,24 @@ export default function AdminDashboard() {
     appointments: 0,
     automationRate: 94.2,
     responseTime: 42,
+    totalSales: 0,
+    pendingOrders: 0
   });
   const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [chartData, setChartData] = useState<{ day: string, val: number }[]>([]);
 
   useEffect(() => {
-    fetchStatus();
-    fetchMetrics();
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        setProfile(prof);
+      }
+      fetchStatus();
+      fetchMetrics();
+    };
+    init();
 
     // Direct Status Subscription
     const statusChannel = supabase
@@ -70,19 +83,55 @@ export default function AdminDashboard() {
 
       const { count: convCount } = await supabase.from('conversations').select('*', { count: 'exact', head: true });
       const { count: leadCount } = await supabase.from('clients').select('*', { count: 'exact', head: true });
-      const { count: apptCount } = await supabase.from('appointments').select('*', { count: 'exact', head: true });
+      if (profile?.business_type === 'pedidos') {
+        const { count: orderCount } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+        const { data: salesData } = await supabase.from('orders').select('total_amount').eq('payment_status', 'paid');
+        const totalSales = salesData?.reduce((acc, curr) => acc + Number(curr.total_amount), 0) || 0;
+        const { count: pendingCount } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending');
 
-      const { data: recent } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          start_at,
-          status,
-          source,
-          clients (name, phone)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        const { data: recentObs } = await supabase
+          .from('orders')
+          .select(`
+            id,
+            total_amount,
+            status,
+            source,
+            created_at,
+            clients (name, phone)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        setMetrics(prev => ({
+          ...prev,
+          conversations: convCount || 0,
+          leads: leadCount || 0,
+          totalSales,
+          pendingOrders: pendingCount || 0,
+        }));
+        setRecentOrders(recentObs || []);
+      } else {
+        const { count: apptCount } = await supabase.from('appointments').select('*', { count: 'exact', head: true });
+        const { data: recent } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            start_at,
+            status,
+            source,
+            clients (name, phone)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        setMetrics(prev => ({
+          ...prev,
+          conversations: convCount || 0,
+          leads: leadCount || 0,
+          appointments: apptCount || 0,
+        }));
+        setRecentAppointments(recent || []);
+      }
 
       const { data: historicalData } = await supabase
         .from('clients')
@@ -109,13 +158,6 @@ export default function AdminDashboard() {
         val: d.val / maxValue
       }));
 
-      setMetrics(prev => ({
-        ...prev,
-        conversations: convCount || 0,
-        leads: leadCount || 0,
-        appointments: apptCount || 0,
-      }));
-      setRecentAppointments(recent || []);
       setChartData(normalizedData);
     } catch (err) {
       console.error('Error fetching dashboard metrics:', err);
@@ -142,12 +184,17 @@ export default function AdminDashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-        {[
+        {(profile?.business_type === 'pedidos' ? [
+          { label: 'Conversaciones', value: metrics.conversations, icon: MessageSquare, color: 'text-primary' },
+          { label: 'Ventas Totales', value: '$' + metrics.totalSales.toLocaleString(), icon: DollarSign, color: 'text-secondary' },
+          { label: 'Pedidos Pendientes', value: metrics.pendingOrders, icon: ShoppingBag, color: 'text-accent' },
+          { label: 'Efectividad', value: metrics.automationRate + '%', icon: Rocket, color: 'text-emerald-400' }
+        ] : [
           { label: 'Conversaciones', value: metrics.conversations, icon: MessageSquare, color: 'text-primary' },
           { label: 'Clientes', value: metrics.leads, icon: Users, color: 'text-secondary' },
           { label: 'Turnos', value: metrics.appointments, icon: Calendar, color: 'text-accent' },
           { label: 'Efectividad', value: metrics.automationRate + '%', icon: Rocket, color: 'text-emerald-400' }
-        ].map((kpi, i) => (
+        ]).map((kpi, i) => (
           <div key={i} className="glass-card group flex flex-col justify-between h-36 relative overflow-hidden border-white/5 hover:border-white/20">
             <div className="absolute -right-6 -top-6 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
               <kpi.icon size={120} />
@@ -246,8 +293,12 @@ export default function AdminDashboard() {
           <div className="glass-card !p-0 overflow-hidden">
             <div className="p-8 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-black uppercase italic tracking-tight text-white/90">Últimos Turnos</h3>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Citas agendadas recientemente</p>
+                <h3 className="text-lg font-black uppercase italic tracking-tight text-white/90">
+                  {profile?.business_type === 'pedidos' ? 'Últimos Pedidos' : 'Últimos Turnos'}
+                </h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                  {profile?.business_type === 'pedidos' ? 'Gestión de ventas recientes' : 'Citas agendadas recientemente'}
+                </p>
               </div>
             </div>
             <div className="overflow-x-auto p-4">
@@ -255,53 +306,98 @@ export default function AdminDashboard() {
                 <thead>
                   <tr className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black border-b border-white/5">
                     <th className="pb-6 px-4">Cliente</th>
-                    <th className="pb-6 px-4">Fecha</th>
+                    <th className="pb-6 px-4">{profile?.business_type === 'pedidos' ? 'Monto' : 'Fecha'}</th>
                     <th className="pb-6 px-4">Estado</th>
                     <th className="pb-6 px-4 text-right">Info</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {recentAppointments.length > 0 ? recentAppointments.map((app) => (
-                    <tr key={app.id} className="group hover:bg-white/5 transition-all duration-300">
-                      <td className="py-5 px-4">
-                        <div className="flex items-center gap-4">
-                          <div className="size-10 rounded-xl glass-card !p-0 flex items-center justify-center font-black text-primary text-xs uppercase bg-primary/5 group-hover:scale-110 transition-transform">
-                            <Users size={16} />
+                  {profile?.business_type === 'pedidos' ? (
+                    recentOrders.length > 0 ? recentOrders.map((order) => (
+                      <tr key={order.id} className="group hover:bg-white/5 transition-all duration-300">
+                        <td className="py-5 px-4">
+                          <div className="flex items-center gap-4">
+                            <div className="size-10 rounded-xl glass-card !p-0 flex items-center justify-center font-black text-primary text-xs uppercase bg-primary/5 group-hover:scale-110 transition-transform">
+                              <ShoppingBag size={16} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-white group-hover:text-primary-light transition-colors">{order.clients?.name || 'Cliente de WhatsApp'}</p>
+                              <p className="text-[10px] text-slate-500 font-bold italic select-all">{(order.clients as any)?.phone}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-black text-white group-hover:text-primary-light transition-colors">{app.clients?.name || 'Nuevo Cliente'}</p>
-                            <p className="text-[10px] text-slate-500 font-bold italic select-all">{(app.clients as any)?.phone}</p>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-black text-white">
+                              ${Number(order.total_amount).toLocaleString()}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">
+                              {format(new Date(order.created_at), "d MMM, HH:mm", { locale: es })}
+                            </span>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-5 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-black text-slate-300">
-                            {format(new Date(app.start_at), "d MMMM", { locale: es })}
-                          </span>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">
-                            {format(new Date(app.start_at), "HH:mm", { locale: es })} hs
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-5 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse"></div>
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
-                            Confirmado
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-5 px-4 text-right">
-                        <button className="p-2 text-slate-500 hover:text-white transition-all hover:rotate-90">
-                          <MoreVertical size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={4} className="py-12 text-center text-slate-500 text-xs font-black uppercase tracking-[0.3em] italic">No hay actividad reciente.</td>
-                    </tr>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className={`size-1.5 rounded-full shadow-[0_0_8px] animate-pulse ${order.status === 'pending' ? 'bg-orange-500 shadow-orange-500' : 'bg-emerald-500 shadow-emerald-500'}`}></div>
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${order.status === 'pending' ? 'text-orange-400' : 'text-emerald-400'}`}>
+                              {order.status === 'pending' ? 'Pendiente' : order.status}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-5 px-4 text-right">
+                          <button className="p-2 text-slate-500 hover:text-white transition-all hover:rotate-90">
+                            <MoreVertical size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="py-12 text-center text-slate-500 text-xs font-black uppercase tracking-[0.3em] italic">No hay pedidos recientes.</td>
+                      </tr>
+                    )
+                  ) : (
+                    recentAppointments.length > 0 ? recentAppointments.map((app) => (
+                      <tr key={app.id} className="group hover:bg-white/5 transition-all duration-300">
+                        <td className="py-5 px-4">
+                          <div className="flex items-center gap-4">
+                            <div className="size-10 rounded-xl glass-card !p-0 flex items-center justify-center font-black text-primary text-xs uppercase bg-primary/5 group-hover:scale-110 transition-transform">
+                              <Users size={16} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-white group-hover:text-primary-light transition-colors">{app.clients?.name || 'Nuevo Cliente'}</p>
+                              <p className="text-[10px] text-slate-500 font-bold italic select-all">{(app.clients as any)?.phone}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black text-slate-300">
+                              {format(new Date(app.start_at), "d MMMM", { locale: es })}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">
+                              {format(new Date(app.start_at), "HH:mm", { locale: es })} hs
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse"></div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+                              Confirmado
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-5 px-4 text-right">
+                          <button className="p-2 text-slate-500 hover:text-white transition-all hover:rotate-90">
+                            <MoreVertical size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="py-12 text-center text-slate-500 text-xs font-black uppercase tracking-[0.3em] italic">No hay actividad reciente.</td>
+                      </tr>
+                    )
                   )}
                 </tbody>
               </table>

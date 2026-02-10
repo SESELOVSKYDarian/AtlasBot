@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, Clock, Lock, Smartphone, Settings, Menu, Rocket, Bot, History as HistoryIcon, Bell, LogOut, User, ShieldCheck, LifeBuoy } from 'lucide-react';
+import { LayoutDashboard, Calendar, Clock, Lock, Smartphone, Settings, Menu, Rocket, Bot, History as HistoryIcon, Bell, LogOut, User, ShieldCheck, LifeBuoy, ShoppingBag, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import ModalPortal from '@/components/modal-portal';
@@ -80,15 +80,31 @@ export default function AdminLayout({
             <span className="text-sm font-bold">Inicio</span>
           </Link>
 
-          <Link href="/admin/appointments" className={`group premium-sidebar-link ${isActive('/admin/appointments') ? 'active' : ''} hover:bg-white/5`}>
-            <Calendar size={20} className={`group-hover:text-secondary transition ${isActive('/admin/appointments') ? 'text-secondary' : ''}`} />
-            <span className="text-sm font-bold">Agenda</span>
-          </Link>
+          {profile?.business_type === 'pedidos' ? (
+            <>
+              <Link href="/admin/orders" className={`group premium-sidebar-link ${isActive('/admin/orders') ? 'active' : ''} hover:bg-white/5`}>
+                <ShoppingBag size={20} className={`group-hover:text-secondary transition ${isActive('/admin/orders') ? 'text-secondary' : ''}`} />
+                <span className="text-sm font-bold">Pedidos</span>
+              </Link>
 
-          <Link href="/admin/services" className={`group premium-sidebar-link ${isActive('/admin/services') ? 'active' : ''} hover:bg-white/5`}>
-            <Rocket size={20} className={`group-hover:text-amber-400 transition ${isActive('/admin/services') ? 'text-amber-400' : ''}`} />
-            <span className="text-sm font-bold">Servicios</span>
-          </Link>
+              <Link href="/admin/products" className={`group premium-sidebar-link ${isActive('/admin/products') ? 'active' : ''} hover:bg-white/5`}>
+                <Package size={20} className={`group-hover:text-amber-400 transition ${isActive('/admin/products') ? 'text-amber-400' : ''}`} />
+                <span className="text-sm font-bold">Catálogo</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/admin/appointments" className={`group premium-sidebar-link ${isActive('/admin/appointments') ? 'active' : ''} hover:bg-white/5`}>
+                <Calendar size={20} className={`group-hover:text-secondary transition ${isActive('/admin/appointments') ? 'text-secondary' : ''}`} />
+                <span className="text-sm font-bold">Agenda</span>
+              </Link>
+
+              <Link href="/admin/services" className={`group premium-sidebar-link ${isActive('/admin/services') ? 'active' : ''} hover:bg-white/5`}>
+                <Rocket size={20} className={`group-hover:text-amber-400 transition ${isActive('/admin/services') ? 'text-amber-400' : ''}`} />
+                <span className="text-sm font-bold">Servicios</span>
+              </Link>
+            </>
+          )}
 
           <div className="pt-10 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black px-4 mb-4">Inteligencia</div>
 
@@ -102,10 +118,12 @@ export default function AdminLayout({
             <span className="text-sm font-bold">Entrenamiento</span>
           </Link>
 
-          <Link href="/admin/history" className={`group premium-sidebar-link ${isActive('/admin/history') ? 'active' : ''} hover:bg-white/5`}>
-            <HistoryIcon size={20} className={`group-hover:text-accent transition ${isActive('/admin/history') ? 'text-accent' : ''}`} />
-            <span className="text-sm font-bold">Historia Clínica</span>
-          </Link>
+          {profile?.business_type !== 'pedidos' && (
+            <Link href="/admin/history" className={`group premium-sidebar-link ${isActive('/admin/history') ? 'active' : ''} hover:bg-white/5`}>
+              <HistoryIcon size={20} className={`group-hover:text-accent transition ${isActive('/admin/history') ? 'text-accent' : ''}`} />
+              <span className="text-sm font-bold">Historia Clínica</span>
+            </Link>
+          )}
 
           <div className="pt-10 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black px-4 mb-4">Sistema</div>
 

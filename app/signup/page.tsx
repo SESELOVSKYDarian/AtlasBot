@@ -294,6 +294,7 @@ export default function SignupPage() {
                                         <option value="">Seleccionar Sector</option>
                                         <option value="fitness">Fitness & Salud</option>
                                         <option value="retail">Retail / E-commerce</option>
+                                        <option value="pedidos">Pedidos / Ventas WhatsApp</option>
                                         <option value="services">Servicios Integrales</option>
                                     </select>
                                 </div>
